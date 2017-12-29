@@ -10,10 +10,7 @@
         "type": "git",
         "url": "git@newgit.op.ksyun.com:ksyun-fe/kdoc-plugin-md.git"
     },
-    "keywords": [
-        "kdoc",
-        "解析插件"
-    ],
+    "keywords": ["kdoc", "解析插件"],
     "author": "wangjianliang",
     "license": "MIT",
     "engines": {

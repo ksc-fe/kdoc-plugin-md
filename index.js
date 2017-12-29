@@ -5,14 +5,28 @@ const codeRenderer = renderer.code;
 const path = require("path");
 const crypto = require("crypto");
 const hash = crypto.createHash("md5");
+
 module.exports = async function(ctx) {
-    // let hlStyle = await ctx.fs.readFile(
-    //     path.resolve(
-    //         __dirname,
-    //         "./node_modules/highlight.js/styles/default.css"
-    //     )
-    // );
-    hlStyle = hlStyle.toString();
+    ctx.data.md = {};
+    async function requireCss(_path) {
+        let style = "";
+        try {
+            style = await ctx.fs.readFile(
+                path.resolve(__dirname, `./node_modules/${_path}`)
+            );
+        } catch (error) {
+            try {
+                style = await ctx.fs.readFile(
+                    path.resolve(__dirname, "../", `./node_modules/${_path}`)
+                );
+            } catch (error) {}
+        }
+        return style;
+    }
+    const hljsStyle = await requireCss("highlight.js/styles/default.css");
+    const hljsPath = "./hljs.css";
+    ctx.data.md.hljsStyle = hljsStyle.toString();
+    ctx.data.md.hljsPath = hljsPath;
     ctx.hook.add("pipe.before", function(file) {
         const codes = [];
         let contents = file.contents.toString();
@@ -49,7 +63,6 @@ module.exports = async function(ctx) {
         });
         file.md = {
             contents: contents,
-            hlStyle: '',
             codes: codes
         };
         file.contents = null;
