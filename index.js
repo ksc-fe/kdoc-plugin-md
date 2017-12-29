@@ -14,31 +14,28 @@ module.exports = async function(ctx) {
     );
     hlStyle = hlStyle.toString();
     ctx.hook.add("pipe.before", function(file) {
-        const styles = [];
-        const scripts = [];
+        const codes = [];
         let contents = file.contents.toString();
         renderer.code = function(code, language) {
             let result = codeRenderer.call(this, code, language);
-            if (language === "js" || language === "javascript") {
-                scripts.push(`
-                    ${code}
-                `);
-            }
-            if (language === "example") {
+            if (/^(example-)/.test(language)) {
+                language = language.replace(/^(example-)/, "");
                 hash.update(code);
                 const id = hash.digest("hex");
-                scripts.push(`
-                    var element = document.getElementById('${id}');
-                    ${code}
-                `);
+                codes.push({
+                    language: language,
+                    contents: `var element = document.getElementById('${id}');${code};`
+                });
                 result = `<div class="example"><div class="example-container" id="${id}"></div>${codeRenderer.call(
                     this,
                     code,
-                    "javascript"
+                    language
                 )}`;
-            }
-            if (language === "css" || language === "style") {
-                styles.push(code);
+            } else {
+                codes.push({
+                    language: language,
+                    contents: code
+                });
             }
             return result;
         };
@@ -53,10 +50,8 @@ module.exports = async function(ctx) {
         file.md = {
             contents: contents,
             hlStyle: hlStyle,
-            styles: styles,
-            scripts: scripts
+            codes: codes
         };
-        console.log(file.md);
         file.contents = null;
     });
 };
