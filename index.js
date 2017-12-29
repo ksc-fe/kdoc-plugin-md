@@ -6,12 +6,12 @@ const path = require("path");
 const crypto = require("crypto");
 const hash = crypto.createHash("md5");
 module.exports = async function(ctx) {
-    let hlStyle = await ctx.fs.readFile(
-        path.resolve(
-            __dirname,
-            "./node_modules/highlight.js/styles/default.css"
-        )
-    );
+    // let hlStyle = await ctx.fs.readFile(
+    //     path.resolve(
+    //         __dirname,
+    //         "./node_modules/highlight.js/styles/default.css"
+    //     )
+    // );
     hlStyle = hlStyle.toString();
     ctx.hook.add("pipe.before", function(file) {
         const codes = [];
@@ -49,7 +49,7 @@ module.exports = async function(ctx) {
         });
         file.md = {
             contents: contents,
-            hlStyle: hlStyle,
+            hlStyle: '',
             codes: codes
         };
         file.contents = null;
