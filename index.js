@@ -2,6 +2,7 @@ const marked = require("marked");
 const highlight = require("highlight.js");
 const renderer = new marked.Renderer();
 const codeRenderer = renderer.code;
+const headingRenderer = renderer.heading;
 const path = require("path");
 const crypto = require("crypto");
 const hash = crypto.createHash("md5");
@@ -30,10 +31,23 @@ module.exports = async function(ctx) {
     ctx.hook.add("pipe.before", function(file) {
         const codes = [];
         let contents = file.contents.toString();
+        const exampleReg = /^(example-)/;
+        let title = "";
+        let subtitle = "";
+        renderer.heading = function(text, level) {
+            if (level === 1) {
+                title = text;
+            }
+            if (level === 2) {
+                subtitle = text;
+            }
+            let result = headingRenderer.call(this, text, level);
+            return result;
+        };
         renderer.code = function(code, language) {
             let result = codeRenderer.call(this, code, language);
-            if (/^(example-)/.test(language)) {
-                language = language.replace(/^(example-)/, "");
+            if (exampleReg.test(language)) {
+                language = language.replace(exampleReg, "");
                 hash.update(code);
                 const id = hash.digest("hex");
                 codes.push({
@@ -62,6 +76,9 @@ module.exports = async function(ctx) {
             }
         });
         file.md = {
+            source: file.contents,
+            title: title,
+            subtitle: subtitle,
             contents: contents,
             codes: codes
         };
