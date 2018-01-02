@@ -28,23 +28,26 @@ module.exports = async function(ctx) {
     const hljsPath = "./hljs.css";
     ctx.data.md.hljsStyle = hljsStyle.toString();
     ctx.data.md.hljsPath = hljsPath;
-    ctx.hook.add("pipe.before", function(file) {
+    ctx.hook.add("pipe", function(file) {
         const codes = [];
         let contents = file.contents.toString();
-        const exampleReg = /^(example-)/;
         let title = "";
         let subtitle = "";
-        renderer.heading = function(text, level) {
+        renderer.heading = function(text, level, raw) {
             if (level === 1) {
                 title = text;
             }
             if (level === 2) {
                 subtitle = text;
             }
-            let result = headingRenderer.call(this, text, level);
+            let result = headingRenderer.call(this, text, level, raw);
             return result;
         };
+        const exampleReg = /^(example-)/;
         renderer.code = function(code, language) {
+            if (language === "example") {
+                language = "example-js";
+            }
             let result = codeRenderer.call(this, code, language);
             if (exampleReg.test(language)) {
                 language = language.replace(exampleReg, "");
