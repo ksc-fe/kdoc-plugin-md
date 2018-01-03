@@ -1,5 +1,6 @@
 const marked = require("marked");
 const highlight = require("highlight.js");
+const yaml = require("js-yaml");
 const renderer = new marked.Renderer();
 const codeRenderer = renderer.code;
 const headingRenderer = renderer.heading;
@@ -7,8 +8,19 @@ const path = require("path");
 const crypto = require("crypto");
 const hash = crypto.createHash("md5");
 
+const parsingYaml = function(contents) {
+    const result = {};
+    result.content = contents.replace(/---\s*\n+\s*((?:.|\n)*)\n+---/, function(
+        all,
+        matched
+    ) {
+        result.setting = yaml.load(matched);
+        return "";
+    });
+    return result;
+};
+
 module.exports = async function(ctx) {
-    ctx.data.md = {};
     async function requireCss(_path) {
         let style = "";
         try {
@@ -24,22 +36,23 @@ module.exports = async function(ctx) {
         }
         return style;
     }
-    const hljsStyle = await requireCss("highlight.js/styles/default.css");
-    const hljsPath = "./hljs.css";
-    ctx.data.md.hljsStyle = hljsStyle.toString();
-    ctx.data.md.hljsPath = hljsPath;
+    const hljsStyle = await requireCss("highlight.js/styles/dracula.css");
+    ctx.data.mdHljsStyle = hljsStyle.toString();
     ctx.hook.add("pipe", function(file) {
         const codes = [];
         let contents = file.contents.toString();
-        let title = "";
-        let innerNav = [];
+        //解析yaml
+        const parsed = parsingYaml(contents);
+        contents = parsed.content;
+        let setting = parsed.setting;
+        let naves = [];
         renderer.heading = function(text, level, raw) {
-            if (level === 1) {
-                title = text;
-            } else {
-                innerNav.push({ title: text, level: level });
-            }
             let result = headingRenderer.call(this, text, level, raw);
+            naves.push({
+                text: text,
+                level: level,
+                content: result
+            });
             return result;
         };
         const exampleReg = /^(example-)/;
@@ -54,7 +67,7 @@ module.exports = async function(ctx) {
                 const id = hash.digest("hex");
                 codes.push({
                     language: language,
-                    contents: `var element = document.getElementById('${id}');${code};`
+                    content: `var element = document.getElementById('${id}');${code};`
                 });
                 result = `<div class="example"><div class="example-container" id="${id}"></div>${codeRenderer.call(
                     this,
@@ -64,7 +77,7 @@ module.exports = async function(ctx) {
             } else {
                 codes.push({
                     language: language,
-                    contents: code
+                    content: code
                 });
             }
             return result;
@@ -79,8 +92,8 @@ module.exports = async function(ctx) {
         });
         file.md = {
             source: file.contents,
-            title: title,
-            innerNav: innerNav,
+            setting: setting,
+            naves: naves,
             contents: contents,
             codes: codes
         };
