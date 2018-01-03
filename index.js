@@ -32,13 +32,12 @@ module.exports = async function(ctx) {
         const codes = [];
         let contents = file.contents.toString();
         let title = "";
-        let subtitle = "";
+        let innerNav = [];
         renderer.heading = function(text, level, raw) {
             if (level === 1) {
                 title = text;
-            }
-            if (level === 2) {
-                subtitle = text;
+            } else {
+                innerNav.push({ title: text, level: level });
             }
             let result = headingRenderer.call(this, text, level, raw);
             return result;
@@ -81,7 +80,7 @@ module.exports = async function(ctx) {
         file.md = {
             source: file.contents,
             title: title,
-            subtitle: subtitle,
+            innerNav: innerNav,
             contents: contents,
             codes: codes
         };
