@@ -3,7 +3,6 @@ const highlight = require("highlight.js");
 const yaml = require("js-yaml");
 const renderer = new marked.Renderer();
 const codeRenderer = renderer.code;
-const headingRenderer = renderer.heading;
 const path = require("path");
 const crypto = require("crypto");
 const hash = crypto.createHash("md5");
@@ -14,7 +13,7 @@ const parsingYaml = function(contents) {
         all,
         matched
     ) {
-        result.setting = yaml.load(matched);
+        result.setting = yaml.safeLoad(matched);
         return "";
     });
     return result;
@@ -45,12 +44,16 @@ module.exports = async function(ctx) {
         const parsed = parsingYaml(contents);
         contents = parsed.content;
         let setting = parsed.setting;
-        let naves = [];
+        let catalogs = [];
         renderer.heading = function(text, level, raw) {
-            let result = headingRenderer.call(this, text, level, raw);
-            naves.push({
+            const id = this.options.headerPrefix
+                ? `${this.options.headerPrefix}-${encodeURIComponent(raw)}`
+                : encodeURIComponent(raw);
+            let result = `<h${level} id='${id}'>${text}</h${level}>`;
+            catalogs.push({
                 text: text,
                 level: level,
+                id: id,
                 content: result
             });
             return result;
@@ -93,7 +96,7 @@ module.exports = async function(ctx) {
         file.md = {
             source: file.contents,
             setting: setting,
-            naves: naves,
+            catalogs: catalogs,
             contents: contents,
             codes: codes
         };
