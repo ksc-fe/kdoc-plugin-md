@@ -85,6 +85,9 @@ module.exports = async function(ctx) {
             }
             return result;
         };
+        
+        ctx.hook.run('md.renderer', ctx, renderer);
+
         contents = marked(contents, {
             renderer: renderer,
             langPrefix: "hljs ",
@@ -102,4 +105,78 @@ module.exports = async function(ctx) {
         };
         file.contents = null;
     });
+
+    ctx.hook.add('dist.before', function(files) {
+        const hljsStyle = ctx.data.mdHljsStyle;
+        const hljscss = "hljs.css";
+        if (hljsStyle) {
+            ctx.fsWrite(path.join(ctx.data.output, hljscss), hljsStyle);
+        }
+        getSideBar(ctx);
+    });
 };
+
+function catalogsTree(catalogs) {
+    let tree = [];
+
+    while (catalogs.length) {
+        const catalog = catalogs.shift();
+        if (catalog.level === 1) {
+            tree.push({
+                title: catalog.text,
+                path: `#${catalog.id}`,
+                level: catalog.level,
+                content: catalog.content,
+                text: catalog.text,
+                children: []
+            });
+        } else {
+            let end = tree[tree.length - 1];
+            if (!end) {
+                end = {
+                    children: []
+                };
+                tree.push(end);
+            }
+            let current = end;
+            for (let index = 0; index < catalog.level - 2; index++) {
+                current.children = current.children || [];
+                let obj = current.children[current.children.length - 1];
+                if (!obj) {
+                    obj = {
+                        children: []
+                    };
+                    current.children.push(obj);
+                }
+                current = obj;
+            }
+            current.children.push({
+                title: catalog.text,
+                path: `#${catalog.id}`,
+                level: catalog.level,
+                content: catalog.content,
+                text: catalog.text,
+                children: []
+            });
+        }
+    }
+    return tree;
+}
+
+function getSideBar(ctx) {
+    const sideBars = {};
+    ctx.fsEach(function(file) {
+        const md = file.md;
+        const setting = md.setting;
+        if (setting) {
+            sideBars[setting.category] = sideBars[setting.category] || [];
+            sideBars[setting.category].push({
+                title: setting.title,
+                path: file.relative,
+                children: catalogsTree(md.catalogs)
+            });
+        }
+        file.sideBars = sideBars;
+    });
+    return sideBars;
+}
