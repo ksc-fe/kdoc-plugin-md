@@ -85,7 +85,7 @@ module.exports = async function(ctx) {
             }
             return result;
         };
-        
+
         ctx.hook.run('md.renderer', ctx, renderer);
 
         contents = marked(contents, {
@@ -106,13 +106,13 @@ module.exports = async function(ctx) {
         file.contents = null;
     });
 
-    ctx.hook.add('dist.before', function(files) {
+    ctx.hook.add('dist.before', async function(files) {
         const hljsStyle = ctx.data.mdHljsStyle;
         const hljscss = "hljs.css";
         if (hljsStyle) {
             ctx.fsWrite(path.join(ctx.data.output, hljscss), hljsStyle);
         }
-        getSideBar(ctx);
+        await getSideBar(ctx);
     });
 };
 
@@ -163,9 +163,9 @@ function catalogsTree(catalogs) {
     return tree;
 }
 
-function getSideBar(ctx) {
+async function getSideBar(ctx) {
     const sideBars = {};
-    ctx.fsEach(function(file) {
+    await ctx.fsEach(function(file) {
         const md = file.md;
         const setting = md.setting;
         if (setting) {
