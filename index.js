@@ -166,6 +166,7 @@ function catalogsTree(catalogs) {
 async function getSideBar(ctx) {
     const sideBars = {};
     await ctx.fsEach(function(file) {
+        if (/demos/.test(file.path)) return;
         const md = file.md;
         const setting = md.setting;
         if (setting) {
