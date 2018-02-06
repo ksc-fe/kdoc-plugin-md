@@ -86,7 +86,7 @@ module.exports = async function(ctx) {
             return result;
         };
 
-        ctx.hook.run('md.renderer', ctx, renderer, file);
+        ctx.hook.run('md.renderer', ctx, renderer, file, codes);
 
         contents = marked(contents, {
             renderer: renderer,
