@@ -165,6 +165,10 @@ function catalogsTree(catalogs) {
 
 async function getSideBar(ctx) {
     const sideBars = {};
+    // sort by order
+    ctx.data.files.sort(function(file) {
+        return file.md.setting.order;
+    });
     await ctx.fsEach(function(file) {
         if (/demos/.test(file.path)) return;
         const md = file.md;
