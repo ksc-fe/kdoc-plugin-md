@@ -167,7 +167,11 @@ async function getSideBar(ctx) {
     const sideBars = {};
     // sort by order
     ctx.data.files.sort(function(file1, file2) {
-        return file1.md.setting.order - file2.md.setting.order;
+        if (file1.md.setting - file2.md.setting) {
+            return file1.md.setting.order - file2.md.setting.order;
+        } else {
+            return 0;
+        }  
     });
     await ctx.fsEach(function(file) {
         if (/demos/.test(file.path)) return;
