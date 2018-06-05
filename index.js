@@ -66,23 +66,21 @@ module.exports = async function(ctx) {
             let result = codeRenderer.call(this, code, language);
             if (exampleReg.test(language)) {
                 language = language.replace(exampleReg, "");
-                hash.update(code);
-                const id = hash.digest("hex");
+                // hash.update(code);
+                // const id = hash.digest("hex");
                 codes.push({
                     language: language,
-                    content: `var element = document.getElementById('${id}');${code};`
+                    content: code,
+                    example: true,
                 });
-                result = `<div class="example"><div class="example-container" id="${id}"></div>${codeRenderer.call(
-                    this,
-                    code,
-                    language
-                )}`;
+                result = `<!-- example -->`;
             } else {
                 codes.push({
                     language: language,
                     content: code
                 });
             }
+
             return result;
         };
 
@@ -171,21 +169,27 @@ async function getSideBar(ctx) {
             return file1.md.setting.order - file2.md.setting.order;
         } else {
             return 0;
-        }  
+        }
     });
     await ctx.fsEach(function(file) {
         if (/demos/.test(file.path)) return;
         const md = file.md;
         const setting = md.setting;
         if (setting) {
-            sideBars[setting.category] = sideBars[setting.category] || [];
-            sideBars[setting.category].push({
+            const sidebar = setting.sidebar;
+            if (!sidebar) return;
+            if (!sideBars[sidebar]) {
+                sideBars[sidebar] = {};
+            }
+            sideBars[sidebar][setting.category] = sideBars[sidebar][setting.category] || [];
+            sideBars[sidebar][setting.category].push({
                 title: setting.title,
                 path: file.relative,
                 children: catalogsTree(md.catalogs)
             });
+
+            file.sideBars = sideBars[sidebar];
         }
-        file.sideBars = sideBars;
     });
     return sideBars;
 }
