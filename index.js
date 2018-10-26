@@ -9,7 +9,7 @@ const hash = crypto.createHash("md5");
 
 const parsingYaml = function(contents) {
     const result = {};
-    result.content = contents.replace(/---\s*\n+\s*((?:.|\n)*?)\n+---/, function(
+    result.content = contents.replace(/---\s*[\n\r]+\s*((?:.|\n|\r)*?)[\n\r]+---/, function(
         all,
         matched
     ) {
