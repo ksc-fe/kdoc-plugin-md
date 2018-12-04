@@ -182,11 +182,10 @@ async function getSideBar(ctx) {
                 sideBars[sidebar] = {};
             }
             sideBars[sidebar][setting.category] = sideBars[sidebar][setting.category] || [];
-            sideBars[sidebar][setting.category].push({
-                title: setting.title,
+            sideBars[sidebar][setting.category].push(Object.assign({}, setting, {
                 path: file.relative.replace(/\\/g, '/'),
                 children: catalogsTree(md.catalogs)
-            });
+            }));
 
             file.sideBars = sideBars[sidebar];
         }
